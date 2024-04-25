@@ -106,12 +106,7 @@ public class ProjectRepositoriesService : IProjectRepositoriesService
 
         if (repository.OwnerUserName != user.UserName) throw new PermissionDeniedException("User is not an owner of this repository");
 
-        await _projectRepositoriesRepository.UpdateRepository(repository.Id, pr =>
-        {
-            pr.Title = updateRepositoryDto.Title;
-            pr.About = updateRepositoryDto.About;
-            pr.IsPublic = updateRepositoryDto.IsPublic;
-        });
+        await _projectRepositoriesRepository.UpdateRepository(repository.Id, updateRepositoryDto);
     }
 
     public async Task RemoveRepository(string userName, string title, ApplicationUser user)

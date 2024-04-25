@@ -1,4 +1,5 @@
-﻿using WebCoder.Domain.Models;
+﻿using WebCoder.Application.DTOs.ProjectRepository;
+using WebCoder.Domain.Models;
 
 namespace WebCoder.Application.RepositoryInterfaces;
 
@@ -10,8 +11,8 @@ public interface IProjectRepositoriesRepository
     Task<IEnumerable<ProjectRepository>> GetRepositories(int takeCount = -1, int skipCount = 0, bool publicOnly = true);
     Task<ProjectRepository?> GetProjectRepositoryById(Guid repositoryId);
     Task<ProjectRepository?> GetProjectRepositoryByOwnerAndTitle(string userName, string title);
-    
-    Task UpdateRepository(Guid repositoryId, Action<ProjectRepository> updater);
+
+    Task UpdateRepository(Guid repositoryId, UpdateRepositoryDto updateRepositoryDto);
     
     Task RemoveRepository(Guid repositoryId);
 }

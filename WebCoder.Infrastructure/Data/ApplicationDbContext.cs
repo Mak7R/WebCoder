@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using WebCoder.Application.Identity;
-using WebCoder.Domain.Models;
+using WebCoder.Infrastructure.Entities;
 
 namespace WebCoder.Infrastructure.Data;
 
@@ -12,13 +12,18 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
         
     }
     
-    public virtual DbSet<ProjectRepository> ProjectRepositories { get; set; }
+    public virtual DbSet<ProjectRepositoryEntity> ProjectRepositories { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        var projectRepository = modelBuilder.Entity<ProjectRepository>();
+        var projectRepository = modelBuilder.Entity<ProjectRepositoryEntity>();
 
         projectRepository.HasKey(pr => pr.Id);
+        projectRepository.HasIndex(pr => new { pr.OwnerId, pr.Title }).IsUnique();
+
+        projectRepository
+            .HasOne(pr => pr.Owner)
+            .WithMany();
         
         base.OnModelCreating(modelBuilder);
     }
