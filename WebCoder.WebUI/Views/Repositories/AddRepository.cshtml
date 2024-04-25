@@ -1,0 +1,38 @@
+﻿@model AddRepositoryDto
+
+@{
+    ViewBag.Title = "Add repository";
+}
+
+<div class="container mt-3">
+    <h2>Add new repository</h2>
+    <form method="post" asp-controller="Repositories" asp-action="AddRepository">
+        <div class="mb-3">
+            <label asp-for="Title" class="form-label"></label>
+            <input asp-for="Title" class="form-control"/>
+            <span asp-validation-for="Title" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="About" class="form-label"></label>
+            <textarea asp-for="About" class="form-control" rows="3"></textarea>
+            <span asp-validation-for="About" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <div class="form-check">
+                <input asp-for="IsPublic" type="checkbox" class="form-check-input"></input>
+                <label asp-for="IsPublic" class="form-label"></label>
+            </div>
+            <span asp-validation-for="IsPublic" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <button type="submit" class="btn btn-success">Add</button>
+        </div>
+
+        <div class="mb-3">
+            <div asp-validation-summary="All" class="text-danger"></div>
+        </div>
+    </form>
+</div>

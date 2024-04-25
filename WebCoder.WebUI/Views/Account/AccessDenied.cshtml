@@ -1,0 +1,13 @@
+﻿@model string?
+
+@{
+    ViewBag.Title = "Access Denied";
+}
+
+<div class="container mt-3 justify-content-center">
+    <h2 class="text-center">Access to url (@Model) was denied</h2>
+    <p class="fs-4 text-center">You can try to <a asp-action="Login">log in</a> with another account
+        which has permission to this page or try <a href="@Model">again</a> in few minutes</p>
+</div>
+
+

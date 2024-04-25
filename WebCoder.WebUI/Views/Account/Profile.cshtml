@@ -1,0 +1,31 @@
+﻿@model ProfileViewModel
+
+@{
+    ViewBag.Title = "Profile";
+}
+
+<div class="container mt-3">
+    <h1>Profile</h1>
+    
+    <p class="fs-3">User: @Model.Name @Model.Surname</p>
+    <p class="fs-3">Username: @Model.Username</p>
+    <p class="fs-3">Profession: @Model.Profession</p>
+    <p class="fs-3">Email: @Model.Email</p>
+    <p class="fs-3">Phone: @Model.Phone</p>
+    <p class="fs-3">Roles: @if (Model.Roles is not null)
+                           {
+                               foreach (var role in Model.Roles)
+                               {
+                                   if (role == nameof(Role.Admin))
+                                   {
+                                       <a asp-area="@nameof(Role.Admin)" asp-controller="Home" asp-action="Index">@role</a>
+                                       ;
+                                   }
+                                   else
+                                   {
+                                       @role
+                                       ; 
+                                   }
+                               }
+                           }</p>
+</div>
