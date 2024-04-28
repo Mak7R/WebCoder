@@ -68,8 +68,16 @@ public class RepositoriesController(IProjectRepositoriesService repositoriesServ
 
         var user = await _userManager.GetUserAsync(User);
         if (user == null) return RedirectToAction("Login", "Account");
-        
-        await _repositoriesService.AddRepository(addRepositoryDto, user);
+
+        try
+        {
+            await _repositoriesService.AddRepository(addRepositoryDto, user);
+        }
+        catch (ArgumentException ex)
+        {
+            ModelState.AddModelError("Title", ex.Message);
+            return View(addRepositoryDto);
+        }
 
         return RedirectToAction("GetRepository", new { userName = user.UserName, title = addRepositoryDto.Title });
     }
@@ -101,8 +109,16 @@ public class RepositoriesController(IProjectRepositoriesService repositoriesServ
 
         var user = await _userManager.GetUserAsync(User);
         if (user == null) if (user == null) return RedirectToAction("Login", "Account");
+        try
+        {
+            await _repositoriesService.UpdateRepository(userName, title, updateRepositoryDto, user);
+        }
+        catch (ArgumentException ex)
+        {
+            ModelState.AddModelError("Title", ex.Message);
+            return View(updateRepositoryDto);
+        }
         
-        await _repositoriesService.UpdateRepository(userName, title, updateRepositoryDto, user);
         return RedirectToAction("GetRepository", new { userName = user.UserName, title = updateRepositoryDto.Title });
     }
     

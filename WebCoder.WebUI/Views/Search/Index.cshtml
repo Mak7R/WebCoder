@@ -1,0 +1,33 @@
+﻿@model IEnumerable<RepositoryViewModel>
+
+@{
+    ViewBag.Title = "Repositories";
+}
+
+<div class="container mt-3">
+    <form method="get" class="d-flex mb-3" role="search">
+        <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+        <button class="btn btn-outline-success" type="submit">Search</button>
+    </form>
+    
+    <h2>Repositories</h2>
+    <ul class="list-group">
+        @foreach (var repository in Model)
+        {
+            <li class="list-group-item">
+                <h4 class="mb-1"><a asp-controller="Repositories" asp-action="GetRepository" asp-route-title="@repository.Title" asp-route-userName="@repository.Owner">@repository.Owner/@repository.Title</a></h4>
+                <p class="mb-1 text-secondary">@repository.About</p>
+                <p class="mb-1">
+                    @if (repository.IsPublic)
+                    {
+                        <span class="badge rounded-pill bg-primary">public</span>
+                    }
+                    else
+                    {
+                        <span class="badge rounded-pill bg-secondary">private</span>
+                    }
+                </p>
+            </li>
+        }
+    </ul>
+</div>

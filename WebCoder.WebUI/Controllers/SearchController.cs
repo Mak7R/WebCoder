@@ -20,13 +20,6 @@ public class SearchController : Controller
     [HttpGet("")]
     public async Task<IActionResult> Index()
     {
-        return View();
-    }
-    
-    [AllowAnonymous]
-    [HttpGet]
-    public async Task<IActionResult> GetRepositories()
-    {
         var repositories = await _repositoriesService.GetRepositories();
         
         return View(repositories.Select(r => new RepositoryViewModel{Id = r.Id, Title = r.Title, IsPublic = r.IsPublic, Owner = r.OwnerUserName, About = r.About}));

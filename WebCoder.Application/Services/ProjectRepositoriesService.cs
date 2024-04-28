@@ -1,4 +1,5 @@
 ﻿using WebCoder.Application.DTOs.ProjectRepository;
+using WebCoder.Application.Extensions;
 using WebCoder.Application.Identity;
 using WebCoder.Application.Interfaces;
 using WebCoder.Application.RepositoryInterfaces;
@@ -9,6 +10,8 @@ namespace WebCoder.Application.Services;
 
 public class ProjectRepositoriesService : IProjectRepositoriesService
 {
+    private const string AllowedTitleCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-";
+    
     private readonly IProjectRepositoriesRepository _projectRepositoriesRepository;
     
     // ReSharper disable once ConvertToPrimaryConstructor
@@ -21,6 +24,11 @@ public class ProjectRepositoriesService : IProjectRepositoriesService
     {
         var now = DateTime.Now;
         var repositoryId = Guid.NewGuid();
+
+        if (!addRepositoryDto.Title.ContainsOnlyCharacters(AllowedTitleCharacters))
+        {
+            throw new ArgumentException("Title must contain only latin characters, digits or -");
+        }
         
         var repository = new ProjectRepository
         {
@@ -32,7 +40,14 @@ public class ProjectRepositoriesService : IProjectRepositoriesService
             CreationDate = now
         };
 
-        await _projectRepositoriesRepository.AddRepository(repository);
+        try
+        {
+            await _projectRepositoriesRepository.AddRepository(repository);
+        }
+        catch (Exception ex)
+        {
+            throw new ArgumentException($"You already had repository with title '{addRepositoryDto.Title}'", ex);
+        }
     }
 
     public async Task<IEnumerable<RepositoryDto>> GetRepositories()
@@ -105,8 +120,20 @@ public class ProjectRepositoriesService : IProjectRepositoriesService
         if (repository == null) throw new NotFoundException("Repository was not found");
 
         if (repository.OwnerUserName != user.UserName) throw new PermissionDeniedException("User is not an owner of this repository");
+        
+        if (!updateRepositoryDto.Title.ContainsOnlyCharacters(AllowedTitleCharacters))
+        {
+            throw new ArgumentException("Title must contain only latin characters, digits or -");
+        }
 
-        await _projectRepositoriesRepository.UpdateRepository(repository.Id, updateRepositoryDto);
+        try
+        {
+            await _projectRepositoriesRepository.UpdateRepository(repository.Id, updateRepositoryDto);
+        }
+        catch (Exception ex)
+        {
+            throw new ArgumentException($"You already had repository with title '{updateRepositoryDto.Title}'", ex);
+        }
     }
 
     public async Task RemoveRepository(string userName, string title, ApplicationUser user)

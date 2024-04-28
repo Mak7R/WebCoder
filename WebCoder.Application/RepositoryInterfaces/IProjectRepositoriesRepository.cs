@@ -1,7 +1,9 @@
 ﻿using WebCoder.Application.DTOs.ProjectRepository;
+using WebCoder.Application.Interfaces;
 using WebCoder.Domain.Models;
 
 namespace WebCoder.Application.RepositoryInterfaces;
+
 
 public interface IProjectRepositoriesRepository
 {

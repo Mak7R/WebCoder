@@ -12,8 +12,7 @@ namespace WebCoder.WebUI.Controllers;
 [Route("[controller]/[action]")]
 public class AccountController(
     UserManager<ApplicationUser> userManager,
-    SignInManager<ApplicationUser> signInManager,
-    RoleManager<ApplicationRole> roleManager)
+    SignInManager<ApplicationUser> signInManager)
     : Controller
 {
     [AllowAnonymous]
@@ -39,6 +38,7 @@ public class AccountController(
             UserName = registerDto.Username,
             Email = registerDto.Email,
             PhoneNumber = registerDto.Phone,
+            Profession = registerDto.Profession
         };
 
         var result = await userManager.CreateAsync(newUser, registerDto.Password);
@@ -76,10 +76,19 @@ public class AccountController(
             return View(loginDto);
         }
 
-        var user = await userManager.FindByEmailAsync(loginDto.EmailOrUsername);
+        ApplicationUser? user;
+        if (loginDto.EmailOrUsername.Contains('@'))
+        {
+            user = await userManager.FindByEmailAsync(loginDto.EmailOrUsername);
+        }
+        else
+        {
+            user = await userManager.FindByNameAsync(loginDto.EmailOrUsername);
+        }
+        
         if (user is null)
         {
-            ModelState.AddModelError("Login", "Invalid email or password");
+            ModelState.AddModelError("Login", "Invalid login or password");
             return View(loginDto);
         }
         
@@ -91,7 +100,7 @@ public class AccountController(
             return LocalRedirect("/");
         }
         
-        ModelState.AddModelError("Login", "Invalid email or password");
+        ModelState.AddModelError("Login", "Invalid login or password");
         return View(loginDto);
     }
 

@@ -30,6 +30,7 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
         options.Password.RequireDigit = false;
         
         options.User.RequireUniqueEmail = true;
+        options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-";
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddUserStore<UserStore<ApplicationUser, ApplicationRole, ApplicationDbContext, Guid>>()
