@@ -1,0 +1,112 @@
+﻿@model CommandDto
+
+@{
+    ViewBag.Title = "Edit sources";
+    ViewBag.Owner = Context.Request.RouteValues["userName"] ?? string.Empty;
+    ViewBag.RepositoryTitle = Context.Request.RouteValues["title"] ?? string.Empty;
+}
+
+@section Styles{
+<style>
+    .file-explorer-item {
+        list-style-type: none;
+    }
+    
+    .file-explorer-item-content{
+        cursor: pointer;
+        -webkit-user-select: none; /* Safari 3.1+ */
+        -moz-user-select: none; /* Firefox 2+ */
+        -ms-user-select: none; /* IE 10+ */
+        user-select: none;    
+    }
+
+    .file-explorer-item-icon{
+        height: 1em;
+    }
+
+    .caret {
+        
+    }
+
+    .caret::before {
+        content: "\25B6";
+        color: black;
+        display: inline-block;
+        margin-right: 6px;
+    }
+
+    .caret-down::before {
+        -ms-transform: rotate(90deg); /* IE 9 */
+        -webkit-transform: rotate(90deg); /* Safari */'
+        transform: rotate(90deg);
+    }
+
+    .nested {
+        display: none;
+    }
+
+    .active {
+        display: block;
+    }
+</style>
+}
+
+<div class="container-fluid" style="min-height: 95vh; background-color: #135D66;">
+    <div class="container">
+        <h2 class="text-center text-white">Repository: @ViewBag.Owner/@ViewBag.RepositoryTitle</h2>
+    </div>
+
+    <div class="row h-100" style="min-height: 95vh;">
+        
+        
+        <aside id="" class="col-md-3" style="background-color: #77B0AA">
+            <h3>File Explorer</h3>
+            <div id="file-explorer-tree">
+                
+            </div>
+        </aside>
+        
+        
+        <div class="col-md-9" style="background-color: #E3FEF7">
+            <form asp-controller="RepositoryFiles" asp-action="ExecuteCommand" asp-route-userName="@ViewBag.Owner" asp-route-title="@ViewBag.RepositoryTitle" method="post" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label asp-for="Command" class="control-label fs-4"></label>
+                    <div class="input-group mb-3">
+                        <input asp-for="Command" class="form-control"/>
+                        <button type="submit" class="btn btn-primary">Execute</button>
+                    </div>
+                    <span asp-validation-for="Command" class="text-danger"></span>
+                </div>
+                
+
+                <div class="mb-3">
+                    <label asp-for="Sources" class="control-label"></label>
+                    <input asp-for="Sources" type="file" class="form-control"/>
+                    <span asp-validation-for="Sources" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <div asp-validation-summary="All" class="text-danger"></div>
+                </div>
+                
+                <div class="mb-3">
+                    <a class="link-info" asp-controller="Help" asp-action="RepositoryCommands">Help with commands</a>
+                </div>
+            </form>
+            
+            <div>
+                <h3>File</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts
+{
+    <script src="/js/idefunctions.js"></script>
+    
+    <script>
+        fetchStructure('@ViewBag.Owner', '@ViewBag.RepositoryTitle');
+    </script>
+}

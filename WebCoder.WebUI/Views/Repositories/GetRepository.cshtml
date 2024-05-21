@@ -29,6 +29,11 @@
         
         if (Model.UserPermission.HasEditPermission())
         {
+            <a class="btn btn-success" asp-action="EditSources" asp-controller="RepositoryFiles" asp-route-userName="@Model.Owner" asp-route-title="@Model.Title">Sources</a>
+        }
+        
+        if (Model.UserPermission.HasEditPermission())
+        {
             <a class="btn btn-primary" asp-action="EditRepository" asp-route-userName="@Model.Owner" asp-route-title="@Model.Title">Edit</a>
         }
 

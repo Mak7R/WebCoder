@@ -13,11 +13,13 @@ public class ProjectRepositoriesService : IProjectRepositoriesService
     private const string AllowedTitleCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-";
     
     private readonly IProjectRepositoriesRepository _projectRepositoriesRepository;
-    
+    private readonly IRepositoryFilesService _repositoryFilesService;
+
     // ReSharper disable once ConvertToPrimaryConstructor
-    public ProjectRepositoriesService(IProjectRepositoriesRepository projectRepositoriesRepository)
+    public ProjectRepositoriesService(IProjectRepositoriesRepository projectRepositoriesRepository, IRepositoryFilesService repositoryFilesService)
     {
         _projectRepositoriesRepository = projectRepositoriesRepository;
+        _repositoryFilesService = repositoryFilesService;
     }
     
     public async Task AddRepository(AddRepositoryDto addRepositoryDto, ApplicationUser user)
@@ -43,6 +45,7 @@ public class ProjectRepositoriesService : IProjectRepositoriesService
         try
         {
             await _projectRepositoriesRepository.AddRepository(repository);
+            await _repositoryFilesService.CreateRepository(repository.OwnerUserName, repository.Title);
         }
         catch (Exception ex)
         {
@@ -144,5 +147,6 @@ public class ProjectRepositoriesService : IProjectRepositoriesService
         if (repository.OwnerUserName != user.UserName) throw new PermissionDeniedException("User is not an owner of this repository");
         
         await _projectRepositoriesRepository.RemoveRepository(repository.Id);
+        await _repositoryFilesService.DeleteRepository(userName, title);
     }
 }

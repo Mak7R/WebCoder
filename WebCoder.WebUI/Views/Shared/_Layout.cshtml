@@ -6,8 +6,9 @@
     <title>@(ViewBag.Title ?? "WebCoder")</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
+    @await RenderSectionAsync("Styles", required: false)
 </head>
-<body>
+<body class="min-vh-100">
 
 <header>
     <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow">
@@ -59,7 +60,7 @@
         </div>
     </nav>
 </header>
-<main role="main" class="pb-3">
+<main role="main" class="h-100" style="min-height: 95vh">
     @RenderBody()
 </main>
 
