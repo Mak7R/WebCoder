@@ -18,9 +18,12 @@ public class SearchController : Controller
     }
     
     [HttpGet("")]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index([FromQuery] string? title)
     {
         var repositories = await _repositoriesService.GetRepositories();
+        if (!string.IsNullOrWhiteSpace(title)) repositories = repositories.Where(r => r.Title.Contains(title, StringComparison.CurrentCultureIgnoreCase));
+
+        ViewBag.SearchTitle = title ?? string.Empty;
         
         return View(repositories.Select(r => new RepositoryViewModel{Id = r.Id, Title = r.Title, IsPublic = r.IsPublic, Owner = r.OwnerUserName, About = r.About}));
     }

@@ -1,4 +1,4 @@
-﻿namespace RepositoriesStorage.RepositoriesStorage;
+﻿namespace RepositoriesStorage.RepositoriesRepository;
 
 public interface IRepositoryIdentity
 {

@@ -68,7 +68,7 @@
         
         
         <div class="col-md-9" style="background-color: #E3FEF7">
-            <form asp-controller="RepositoryFiles" asp-action="ExecuteCommand" asp-route-userName="@ViewBag.Owner" asp-route-title="@ViewBag.RepositoryTitle" method="post" enctype="multipart/form-data">
+            <form asp-controller="RepositorySources" asp-action="ExecuteCommand" asp-route-userName="@ViewBag.Owner" asp-route-title="@ViewBag.RepositoryTitle" method="post" enctype="multipart/form-data">
                 <div class="mb-3">
                     <label asp-for="Command" class="control-label fs-4"></label>
                     <div class="input-group mb-3">
@@ -95,7 +95,13 @@
             </form>
             
             <div>
-                <h3>File</h3>
+                <h3>File: <div id="file-name-view"></div></h3>
+                
+                <form method="POST" asp-controller="RepositorySources" asp-action="UpdateFile" asp-route-userName="@Context.Request.RouteValues["userName"]" asp-route-title="@Context.Request.RouteValues["title"]">
+                    <input id="file-path-edit-area" name="FilePath" hidden/>
+                    <textarea rows="20" class="w-100 h-100" id="file-edit-area" name="FileData"></textarea>
+                    <button class="btn btn-success" type="submit">Update</button>
+                </form>
             </div>
         </div>
     </div>

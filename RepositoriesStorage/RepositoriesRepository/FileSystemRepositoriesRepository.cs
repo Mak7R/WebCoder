@@ -1,16 +1,16 @@
-﻿using RepositoriesStorage.FilesManager;
+﻿using RepositoriesStorage.FileStorage;
 
-namespace RepositoriesStorage.RepositoriesStorage;
+namespace RepositoriesStorage.RepositoriesRepository;
 
-public class FileSystemRepositoriesStorage : IRepositoriesStorage
+public class FileSystemRepositoriesRepository : IRepositoriesRepository
 {
-    private readonly IFileSystemManager _fileSystemManager;
+    private readonly IFileStorage _fileStorage;
     private readonly string _storageDirectoryPath;
     private string ToFullPath(string path) => Path.Combine(_storageDirectoryPath, path);
 
-    public FileSystemRepositoriesStorage(IFileSystemManager fileSystemManager, string storageDirectoryPath)
+    public FileSystemRepositoriesRepository(IFileStorage fileStorage, string storageDirectoryPath)
     {
-        _fileSystemManager = fileSystemManager;
+        _fileStorage = fileStorage;
         _storageDirectoryPath = storageDirectoryPath;
 
         if (!Directory.Exists(_storageDirectoryPath)) Directory.CreateDirectory(_storageDirectoryPath);
@@ -19,13 +19,21 @@ public class FileSystemRepositoriesStorage : IRepositoriesStorage
     public async Task CreateRepository(IRepositoryIdentity repositoryIdentity)
     {
         var fullRepositoryPath = ToFullPath(repositoryIdentity.RepositoryName);
-        await _fileSystemManager.CreateDirectory(fullRepositoryPath);
+        await _fileStorage.CreateDirectory(fullRepositoryPath);
+    }
+
+    public async Task UpdateRepository(IRepositoryIdentity repositoryIdentity, IRepositoryIdentity newRepositoryIdentity)
+    {
+        var fullRepositoryPath = ToFullPath(repositoryIdentity.RepositoryName);
+        var newFullRepositoryPath = ToFullPath(newRepositoryIdentity.RepositoryName);
+
+        await _fileStorage.MoveDirectory(fullRepositoryPath, newFullRepositoryPath);
     }
 
     public async Task DeleteRepository(IRepositoryIdentity repositoryIdentity)
     {
         var fullRepositoryPath = ToFullPath(repositoryIdentity.RepositoryName);
-        await _fileSystemManager.DeleteDirectory(fullRepositoryPath);
+        await _fileStorage.DeleteDirectory(fullRepositoryPath);
     }
     
     public FileSystemTreeNode GetStructure(IRepositoryIdentity repositoryIdentity)
@@ -33,7 +41,7 @@ public class FileSystemRepositoriesStorage : IRepositoriesStorage
         var fullRepositoryPath = ToFullPath(repositoryIdentity.RepositoryName);
         if (!Directory.Exists(fullRepositoryPath)) throw new InvalidOperationException("Repository doesn't exists");
         
-        FileSystemTreeNode root = new FileSystemTreeNode(fullRepositoryPath, "Repository");
+        FileSystemTreeNode root = new FileSystemTreeNode(fullRepositoryPath.Split(Path.DirectorySeparatorChar).Last(), "Repository");
         
         FillTree(root, fullRepositoryPath);
 
@@ -60,31 +68,31 @@ public class FileSystemRepositoriesStorage : IRepositoriesStorage
     public async Task AddDirectory(IRepositoryIdentity repositoryIdentity, string directoryPath)
     {
         var fullRepositoryPath = ToFullPath(repositoryIdentity.RepositoryName);
-        await _fileSystemManager.CreateDirectory(Path.Combine(fullRepositoryPath, directoryPath));
+        await _fileStorage.CreateDirectory(Path.Combine(fullRepositoryPath, directoryPath));
     }
 
     public async Task AddFile(IRepositoryIdentity repositoryIdentity, string filePath)
     {
         var fullRepositoryPath = ToFullPath(repositoryIdentity.RepositoryName);
-        await _fileSystemManager.CreateDirectory(Path.Combine(fullRepositoryPath, filePath));
+        await _fileStorage.CreateFile(Path.Combine(fullRepositoryPath, filePath));
     }
 
     public async Task DeleteDirectory(IRepositoryIdentity repositoryIdentity, string directoryPath)
     {
         var fullRepositoryPath = ToFullPath(repositoryIdentity.RepositoryName);
-        await _fileSystemManager.DeleteDirectory(Path.Combine(fullRepositoryPath, directoryPath));
+        await _fileStorage.DeleteDirectory(Path.Combine(fullRepositoryPath, directoryPath));
     }
 
     public async Task DeleteFile(IRepositoryIdentity repositoryIdentity, string filePath)
     {
         var fullRepositoryPath = ToFullPath(repositoryIdentity.RepositoryName);
-        await _fileSystemManager.DeleteFile(Path.Combine(fullRepositoryPath, filePath));
+        await _fileStorage.DeleteFile(Path.Combine(fullRepositoryPath, filePath));
     }
 
     public async Task MoveDirectory(IRepositoryIdentity repositoryIdentity, string sourceDirectoryPath, string destDirectoryPath)
     {
         var fullRepositoryPath = ToFullPath(repositoryIdentity.RepositoryName);
-        await _fileSystemManager.MoveDirectory(
+        await _fileStorage.MoveDirectory(
             Path.Combine(fullRepositoryPath, sourceDirectoryPath), 
             Path.Combine(fullRepositoryPath, destDirectoryPath));
     }
@@ -92,7 +100,7 @@ public class FileSystemRepositoriesStorage : IRepositoriesStorage
     public async Task MoveFile(IRepositoryIdentity repositoryIdentity, string sourceFilePath, string destFilePath)
     {
         var fullRepositoryPath = ToFullPath(repositoryIdentity.RepositoryName);
-        await _fileSystemManager.MoveFile(
+        await _fileStorage.MoveFile(
             Path.Combine(fullRepositoryPath, sourceFilePath), 
             Path.Combine(fullRepositoryPath, destFilePath));
     }
@@ -100,7 +108,7 @@ public class FileSystemRepositoriesStorage : IRepositoriesStorage
     public async Task CopyDirectory(IRepositoryIdentity repositoryIdentity, string sourceDirectoryPath, string destDirectoryPath)
     {
         var fullRepositoryPath = ToFullPath(repositoryIdentity.RepositoryName);
-        await _fileSystemManager.CopyDirectory(
+        await _fileStorage.CopyDirectory(
             Path.Combine(fullRepositoryPath, sourceDirectoryPath), 
             Path.Combine(fullRepositoryPath, sourceDirectoryPath));
     }
@@ -108,7 +116,7 @@ public class FileSystemRepositoriesStorage : IRepositoriesStorage
     public async Task CopyFile(IRepositoryIdentity repositoryIdentity, string sourceFilePath, string destFilePath)
     {
         var fullRepositoryPath = ToFullPath(repositoryIdentity.RepositoryName);
-        await _fileSystemManager.CopyDirectory(
+        await _fileStorage.CopyDirectory(
             Path.Combine(fullRepositoryPath, sourceFilePath), 
             Path.Combine(fullRepositoryPath, destFilePath));
     }
@@ -116,30 +124,30 @@ public class FileSystemRepositoriesStorage : IRepositoriesStorage
     public async Task InsertDirectory(IRepositoryIdentity repositoryIdentity, string parentDirectoryPath, Stream archiveStream)
     {
         var fullRepositoryPath = ToFullPath(repositoryIdentity.RepositoryName);
-        await _fileSystemManager.InsertDirectory(Path.Combine(fullRepositoryPath, parentDirectoryPath), archiveStream);
+        await _fileStorage.InsertDirectory(Path.Combine(fullRepositoryPath, parentDirectoryPath), archiveStream);
     }
 
-    public async Task InsertFile(IRepositoryIdentity repositoryIdentity, string parentDirectoryPath, Stream fileStream)
+    public async Task InsertFile(IRepositoryIdentity repositoryIdentity, string fileLocalPath, Stream fileStream)
     {
         var fullRepositoryPath = ToFullPath(repositoryIdentity.RepositoryName);
-        await _fileSystemManager.InsertFile(Path.Combine(fullRepositoryPath, parentDirectoryPath), fileStream);
+        await _fileStorage.InsertFile(Path.Combine(fullRepositoryPath, fileLocalPath), fileStream);
     }
 
     public async Task<Stream> GetDirectory(IRepositoryIdentity repositoryIdentity, string directoryPath)
     {
         var fullRepositoryPath = ToFullPath(repositoryIdentity.RepositoryName);
-        return await _fileSystemManager.GetDirectoryAsStream(Path.Combine(fullRepositoryPath, directoryPath));
+        return await _fileStorage.GetDirectoryAsStream(Path.Combine(fullRepositoryPath, directoryPath));
     }
 
     public async Task<Stream> GetFile(IRepositoryIdentity repositoryIdentity, string filePath)
     {
         var fullRepositoryPath = ToFullPath(repositoryIdentity.RepositoryName);
-        return await _fileSystemManager.GetFileAsStream(Path.Combine(fullRepositoryPath, filePath));
+        return await _fileStorage.GetFileAsStream(Path.Combine(fullRepositoryPath, filePath));
     }
 
     public async Task UpdateFile(IRepositoryIdentity repositoryIdentity, string filePath, Stream fileStream)
     {
         var fullRepositoryPath = ToFullPath(repositoryIdentity.RepositoryName);
-        await _fileSystemManager.UpdateFile(Path.Combine(fullRepositoryPath, filePath), fileStream);
+        await _fileStorage.UpdateFile(Path.Combine(fullRepositoryPath, filePath), fileStream);
     }
 }

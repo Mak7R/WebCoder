@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using WebCoder.Application.Identity;
 using WebCoder.Application.Interfaces;
 using WebCoder.Application.Models;
 
@@ -8,11 +9,11 @@ namespace WebCoder.Application.Services;
 
 public class RepositoryCommandHandler : IRepositoryCommandHandler
 {
-    private readonly IRepositoryFilesService _repositoryFilesService;
+    private readonly IRepositorySources _repositorySources;
 
-    public RepositoryCommandHandler(IRepositoryFilesService repositoryFilesService)
+    public RepositoryCommandHandler(IRepositorySources repositorySources)
     {
-        _repositoryFilesService = repositoryFilesService;
+        _repositorySources = repositorySources;
     }
 
 
@@ -153,9 +154,23 @@ public class RepositoryCommandHandler : IRepositoryCommandHandler
             }
         }
     }
+
+
+    private static readonly string[] DirectoryAttributes = ["FOLDER", "DIRECTORY", "-D"];
+    private static readonly string[] FileAttributes = ["FILE", "-F"];
+    
+    private static class SupportedOperations
+    {
+        public const string Add = "ADD";
+        public const string Delete = "DELETE";
+        public const string Insert = "INSERT";
+        public const string Copy = "COPY";
+        public const string Move = "MOVE";
+        public const string Load = "LOAD";
+    }
     
     
-    public RepositoryCommandResult Execute(string userName, string repositoryTitle, string command, IFormFile? sources = null)
+    public async Task<RepositoryCommandResult> Execute(ApplicationUser user, string userName, string repositoryTitle, string command, IFormFile? sources = null)
     {
         CommandModel commandModel;
         try
@@ -169,15 +184,127 @@ public class RepositoryCommandHandler : IRepositoryCommandHandler
 
         switch (commandModel.Command.ToUpper())
         {
-            case "ADD":
+            case SupportedOperations.Add:
+                if (commandModel.Args.Length != 2)
+                    return new RepositoryCommandResult(false, ["Invalid arguments count"]);
                 
+                if (DirectoryAttributes.Contains(commandModel.Args[0].ToUpper()))
+                {
+                    await _repositorySources.AddDirectory(user, userName, repositoryTitle, ParsePath(commandModel.Args[1]));
+                }
+                else if (FileAttributes.Contains(commandModel.Args[0].ToUpper()))
+                {
+                    await _repositorySources.AddFile(user, userName, repositoryTitle, ParsePath(commandModel.Args[1]));
+                }
+                else
+                {
+                    return new RepositoryCommandResult(false, ["Invalid arguments attributes"]);
+                }
                 break;
-            case "DELETE":
+            case SupportedOperations.Delete:
+                if (commandModel.Args.Length != 2)
+                    return new RepositoryCommandResult(false, ["Invalid arguments count"]);
+                
+                if (DirectoryAttributes.Contains(commandModel.Args[0].ToUpper()))
+                {
+                    await _repositorySources.DeleteDirectory(user, userName, repositoryTitle, ParsePath(commandModel.Args[1]));
+                }
+                else if (FileAttributes.Contains(commandModel.Args[0].ToUpper()))
+                {
+                    await _repositorySources.DeleteFile(user, userName, repositoryTitle, ParsePath(commandModel.Args[1]));
+                }
+                else
+                {
+                    return new RepositoryCommandResult(false, ["Invalid arguments attributes"]);
+                }
+                break;
+            case SupportedOperations.Copy:
+                if (commandModel.Args.Length != 3)
+                    return new RepositoryCommandResult(false, ["Invalid arguments count"]);
+                
+                if (DirectoryAttributes.Contains(commandModel.Args[0].ToUpper()))
+                {
+                    await _repositorySources.CopyDirectory(user, userName, repositoryTitle, ParsePath(commandModel.Args[1]), ParsePath(commandModel.Args[2]));
+                }
+                else if (FileAttributes.Contains(commandModel.Args[0].ToUpper()))
+                {
+                    await _repositorySources.CopyDirectory(user, userName, repositoryTitle, ParsePath(commandModel.Args[1]), ParsePath(commandModel.Args[2]));
+                }
+                else
+                {
+                    return new RepositoryCommandResult(false, ["Invalid arguments attributes"]);
+                }
+                break;
+            case SupportedOperations.Move:
+                if (commandModel.Args.Length != 3)
+                    return new RepositoryCommandResult(false, ["Invalid arguments count"]);
+                
+                if (DirectoryAttributes.Contains(commandModel.Args[0].ToUpper()))
+                {
+                    await _repositorySources.MoveDirectory(user, userName, repositoryTitle, ParsePath(commandModel.Args[1]), ParsePath(commandModel.Args[2]));
+                }
+                else if (FileAttributes.Contains(commandModel.Args[0].ToUpper()))
+                {
+                    await _repositorySources.MoveFile(user, userName, repositoryTitle, ParsePath(commandModel.Args[1]), ParsePath(commandModel.Args[2]));
+                }
+                else
+                {
+                    return new RepositoryCommandResult(false, ["Invalid arguments attributes"]);
+                }
+                break;
+            case SupportedOperations.Insert:
+            {
+                if (commandModel.Args.Length != 2)
+                    return new RepositoryCommandResult(false, ["Invalid arguments count"]);
+
+                if (sources is null)
+                    return new RepositoryCommandResult(false, ["Sources was null"]);
+                
+                if (DirectoryAttributes.Contains(commandModel.Args[0].ToUpper()))
+                {
+                    await _repositorySources.InsertDirectory(user, userName, repositoryTitle, ParsePath(commandModel.Args[1]), sources);
+                }
+                else if (FileAttributes.Contains(commandModel.Args[0].ToUpper()))
+                {
+                    await _repositorySources.InsertFile(user, userName, repositoryTitle, ParsePath(commandModel.Args[1]), sources);
+                }
+                else
+                {
+                    return new RepositoryCommandResult(false, ["Invalid arguments attributes"]);
+                }
+                break;
+            }
+            case SupportedOperations.Load:
+                if (commandModel.Args.Length != 2)
+                    return new RepositoryCommandResult(false, ["Invalid arguments count"]);
+
+                var path = ParsePath(commandModel.Args[1]);
+                if (DirectoryAttributes.Contains(commandModel.Args[0].ToUpper()))
+                {
+                    var archive = await _repositorySources.GetDirectory(user, userName, repositoryTitle, path);
+                    return new RepositoryCommandResult(true, Array.Empty<string>(), new FileResult(path.Split(Path.DirectorySeparatorChar).Last() + ".zip", archive));
+                }
+                else if (FileAttributes.Contains(commandModel.Args[0].ToUpper()))
+                {
+                    var file = await _repositorySources.GetFile(user, userName, repositoryTitle, path);
+                    return new RepositoryCommandResult(true, Array.Empty<string>(), new FileResult(path.Split(Path.DirectorySeparatorChar).Last(), file));
+                }
+                else
+                {
+                    return new RepositoryCommandResult(false, ["Invalid arguments attributes"]);
+                }
                 break;
             default:
                 return new RepositoryCommandResult(false, ["Unknown command"]);
         }
         
         return new RepositoryCommandResult(true, Array.Empty<string>());
+
+        string ParsePath(string userPath)
+        {
+            userPath = userPath.Replace('/', Path.DirectorySeparatorChar);
+            userPath = userPath.StartsWith(Path.DirectorySeparatorChar) ? userPath.Substring(1) : userPath;
+            return userPath.StartsWith(repositoryTitle + Path.DirectorySeparatorChar) ? userPath.Substring(repositoryTitle.Length + 1) : userPath;
+        }
     }
 }

@@ -12,10 +12,11 @@ namespace WebCoder.WebUI.Controllers;
 
 [Controller]
 [Route("/repositories")]
-public class RepositoriesController(IProjectRepositoriesService repositoriesService, UserManager<ApplicationUser> userManager) : Controller
+public class RepositoriesController(IProjectRepositoriesService repositoriesService, UserManager<ApplicationUser> userManager, IRepositorySources repositorySources) : Controller
 {
     private readonly IProjectRepositoriesService _repositoriesService = repositoriesService;
     private readonly UserManager<ApplicationUser> _userManager = userManager;
+    private readonly IRepositorySources _repositorySources = repositorySources;
 
     [Authorize]
     [HttpGet("")]
@@ -59,11 +60,11 @@ public class RepositoriesController(IProjectRepositoriesService repositoriesServ
     
     [Authorize]
     [HttpPost("add")]
-    public async Task<IActionResult> AddRepository(AddRepositoryDto addRepositoryDto)
+    public async Task<IActionResult> AddRepository(CreateRepositoryDto createRepositoryDto)
     {
         if (!ModelState.IsValid)
         {
-            return View(addRepositoryDto);
+            return View(createRepositoryDto);
         }
 
         var user = await _userManager.GetUserAsync(User);
@@ -71,15 +72,15 @@ public class RepositoriesController(IProjectRepositoriesService repositoriesServ
 
         try
         {
-            await _repositoriesService.AddRepository(addRepositoryDto, user);
+            await _repositorySources.CreateRepository(user, createRepositoryDto);
         }
         catch (ArgumentException ex)
         {
             ModelState.AddModelError("Title", ex.Message);
-            return View(addRepositoryDto);
+            return View(createRepositoryDto);
         }
 
-        return RedirectToAction("GetRepository", new { userName = user.UserName, title = addRepositoryDto.Title });
+        return RedirectToAction("GetRepository", new { userName = user.UserName, title = createRepositoryDto.Title });
     }
 
 
@@ -111,7 +112,7 @@ public class RepositoriesController(IProjectRepositoriesService repositoriesServ
         if (user == null) if (user == null) return RedirectToAction("Login", "Account");
         try
         {
-            await _repositoriesService.UpdateRepository(userName, title, updateRepositoryDto, user);
+            await _repositorySources.UpdateRepository(user, userName, title, updateRepositoryDto);
         }
         catch (ArgumentException ex)
         {
@@ -129,7 +130,7 @@ public class RepositoriesController(IProjectRepositoriesService repositoriesServ
         var user = await _userManager.GetUserAsync(User);
         if (user == null) if (user == null) return RedirectToAction("Login", "Account");
         
-        await _repositoriesService.RemoveRepository(userName, title, user);
+        await _repositorySources.DeleteRepository(user, title);
         return RedirectToAction("Index", "Home");
     }
 }

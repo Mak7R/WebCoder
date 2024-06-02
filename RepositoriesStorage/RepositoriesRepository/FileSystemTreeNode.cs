@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace RepositoriesStorage.RepositoriesStorage;
+namespace RepositoriesStorage.RepositoriesRepository;
 
 public class FileSystemTreeNode
 {

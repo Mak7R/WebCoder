@@ -4,7 +4,7 @@ using static WebCoder.Domain.Rules.DataSizes.ProjectRepository;
 
 namespace WebCoder.Application.DTOs.ProjectRepository;
 
-public class AddRepositoryDto
+public class CreateRepositoryDto
 {
     [Display(Name = "Title")]
     [Required(ErrorMessage = "Title is required")]

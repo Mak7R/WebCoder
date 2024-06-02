@@ -1,6 +1,6 @@
-﻿namespace RepositoriesStorage.FilesManager;
+﻿namespace RepositoriesStorage.FileStorage;
 
-public interface IFileSystemManager
+public interface IFileStorage
 {
     Task CreateDirectory(string newDirectoryPath);
     Task CreateFile(string newFilePath);

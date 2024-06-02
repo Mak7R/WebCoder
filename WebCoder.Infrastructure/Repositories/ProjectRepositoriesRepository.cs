@@ -27,7 +27,7 @@ public class ProjectRepositoriesRepository(ApplicationDbContext dbContext) : IPr
         await dbContext.SaveChangesAsync();
     }
 
-    public async Task<IEnumerable<ProjectRepository>> GetRepositoriesForUser(string userName)
+    public async Task<IEnumerable<ProjectRepository>> GetRepositoriesForUser(string? userName = null)
     {
         return await dbContext.ProjectRepositories
             .AsNoTracking()

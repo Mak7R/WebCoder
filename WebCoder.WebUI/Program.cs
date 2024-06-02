@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using RepositoryStoragesRealizations.DirectoryStorage.RepositoriesStorage;
-using RepositoryStoragesRealizations.DirectoryStorage.TempStorage;
-using RepositoryStoragesRealizations.FileArchiver;
+using RepositoriesStorage.Archiver;
+using RepositoriesStorage.FileStorage;
+using RepositoriesStorage.RepositoriesRepository;
+using RepositoriesStorage.TempStorage;
 using WebCoder.Application.Enums;
 using WebCoder.Application.Identity;
 using WebCoder.Application.Interfaces;
@@ -17,6 +19,15 @@ using WebCoder.Infrastructure.Repositories;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<RepositoryFilesOptions>(builder.Configuration.GetSection("RepositoryFiles"));
+
+
+// builder.Host.ConfigureLogging(loggingBuilder =>
+// {
+//     loggingBuilder.ClearProviders();
+//     loggingBuilder.AddConsole();
+//     loggingBuilder.AddDebug();
+// });
+builder.Logging.ClearProviders().AddConsole().AddDebug();
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpContextAccessor();
@@ -55,11 +66,12 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 builder.Services.AddScoped<IProjectRepositoriesRepository, ProjectRepositoriesRepository>();
 builder.Services.AddScoped<IProjectRepositoriesService, ProjectRepositoriesService>();
-builder.Services.AddScoped<IRepositoryFilesService, RepositoryFilesService>();
+builder.Services.AddScoped<IRepositorySources, RepositorySources>();
 builder.Services.AddScoped<IRepositoryCommandHandler, RepositoryCommandHandler>();
 
 // start repositories storage
-builder.Services.AddSingleton<IFileArchiver, ZipFileArchiver>();
+builder.Services.AddTransient<IArchiver, ZipArchiver>();
+builder.Services.AddTransient<IFileStorage, FileStorage>();
 builder.Services.AddSingleton<ITempStorage, TempStorage>(
     _ =>
     {
@@ -68,20 +80,28 @@ builder.Services.AddSingleton<ITempStorage, TempStorage>(
         
         return new TempStorage(path);
     });
-builder.Services.AddScoped<IDirectoryRepositoriesStorage, DirectoryRepositoriesStorage>(
+
+builder.Services.AddScoped<IRepositoriesRepository, FileSystemRepositoriesRepository>(
     provider =>
     {
         var path = builder.Configuration.GetSection("RepositoryFilesOptions")["WorkingDirectory"] ??
                    throw new Exception("Configuration was not found");
         
-        return new DirectoryRepositoriesStorage(path,
-            provider.GetRequiredService<ITempStorage>(),
-            provider.GetRequiredService<IFileArchiver>()
+        return new FileSystemRepositoriesRepository(
+            provider.GetRequiredService<IFileStorage>(),
+            path
         );
     }); 
 // end repositories storage
 
+builder.Services.AddHttpLogging(options =>
+{
+    options.LoggingFields = HttpLoggingFields.RequestPath | HttpLoggingFields.ResponseStatusCode;
+}); // for http logging
+
 var app = builder.Build();
+
+app.UseHttpLogging(); // http logging
 
 {
     // migrate DB
@@ -112,6 +132,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
@@ -124,3 +145,5 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+
+// TODO should to move repositorySources to infrastructure

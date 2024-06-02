@@ -1,8 +1,9 @@
-﻿namespace RepositoriesStorage.RepositoriesStorage;
+﻿namespace RepositoriesStorage.RepositoriesRepository;
 
-public interface IRepositoriesStorage
+public interface IRepositoriesRepository
 {
     Task CreateRepository(IRepositoryIdentity repositoryIdentity);
+    Task UpdateRepository(IRepositoryIdentity repositoryIdentity, IRepositoryIdentity newRepositoryIdentity);
     Task DeleteRepository(IRepositoryIdentity repositoryIdentity);
     FileSystemTreeNode GetStructure(IRepositoryIdentity repositoryIdentity);
     
@@ -18,7 +19,7 @@ public interface IRepositoriesStorage
     Task CopyFile(IRepositoryIdentity repositoryIdentity, string sourceFilePath, string destFilePath);
 
     Task InsertDirectory(IRepositoryIdentity repositoryIdentity, string parentDirectoryPath, Stream archiveStream);
-    Task InsertFile(IRepositoryIdentity repositoryIdentity, string parentDirectoryPath, Stream fileStream);
+    Task InsertFile(IRepositoryIdentity repositoryIdentity, string fileLocalPath, Stream fileStream);
 
     Task<Stream> GetDirectory(IRepositoryIdentity repositoryIdentity, string directoryPath);
     Task<Stream> GetFile(IRepositoryIdentity repositoryIdentity, string filePath);

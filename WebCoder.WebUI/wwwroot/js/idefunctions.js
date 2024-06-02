@@ -7,7 +7,7 @@
             return response.json();
         })
         .then(data => {
-            renderStructure(data.result);
+            renderStructure(data);
         })
         .catch(error => {
             console.error('Error fetching data:', error);
@@ -28,13 +28,7 @@ function renderNode(node, parentElement, path) {
     const  itemContent = document.createElement('span')
 
     itemIcon.classList.add('file-explorer-item-icon')
-    if (path === '' && node.type === 'Repository') {
-        itemIcon.src = '/icons/icon-repository.png';
-    } else if (node.type === 'Directory') {
-        itemIcon.src = '/icons/icon-directory.svg';
-    } else if (node.type === 'File') {
-        itemIcon.src = '/icons/icon-file.svg';
-    }
+    
     
     itemName.textContent = node.name;
 
@@ -54,12 +48,27 @@ function renderNode(node, parentElement, path) {
             let path = this.getAttribute('data-bs-content');
 
             navigator.clipboard.writeText(path).then(function() {
-                console.log("Значение успешно скопировано в буфер обмена: " + valueToCopy);
+                
             }, function(err) {
-                console.error("Ошибка при копировании значения: ", err);
+                console.error("Error of copy value: ", err);
             });
         }
+        
     });
+
+    if (path === '' && node.type === 'Repository') {
+        itemIcon.src = '/icons/icon-repository.png';
+    } else if (node.type === 'Directory') {
+        itemIcon.src = '/icons/icon-directory.svg';
+    } else if (node.type === 'File') {
+        itemIcon.src = '/icons/icon-file.svg';
+        itemContent.addEventListener("click", function (event){
+            if (!event.ctrlKey){
+                let path = this.getAttribute('data-bs-content');
+                requestFile(path);
+            }
+        });
+    }
     
     new bootstrap.Popover(itemContent);
     
@@ -94,4 +103,33 @@ function afterRender(){
             }
         });
     }
+}
+
+
+async function requestFile(filePath) {
+    const url = window.location.origin + window.location.pathname + '/get-file' + `?filePath=${filePath}`;
+
+    await fetch(url, {
+        method: "GET",
+        headers: {
+            "Content-Type": "text/plain"
+        }
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Network response was not ok " + response.statusText);
+            }
+            return response.text(); // Получаем текст из ответа
+        })
+        .then(data => {
+            // Отображаем содержимое файла в textarea
+            let pathElements = filePath.split('/');
+            document.getElementById('file-name-view').innerText = pathElements[pathElements.length - 1];
+
+            document.getElementById('file-path-edit-area').value = filePath;
+            document.getElementById('file-edit-area').value = data;
+        })
+        .catch(error => {
+            console.error("There was a problem with the fetch operation:", error);
+        });
 }

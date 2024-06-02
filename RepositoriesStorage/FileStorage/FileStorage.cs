@@ -1,12 +1,12 @@
 ﻿using RepositoriesStorage.Archiver;
 
-namespace RepositoriesStorage.FilesManager;
+namespace RepositoriesStorage.FileStorage;
 
-public class FileSystemManager : IFileSystemManager
+public class FileStorage : IFileStorage
 {
     private readonly IArchiver _archiver;
 
-    public FileSystemManager(IArchiver archiver)
+    public FileStorage(IArchiver archiver)
     {
         _archiver = archiver;
     }

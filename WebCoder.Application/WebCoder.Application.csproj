@@ -12,7 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\RepositoryStoragesRealizations\RepositoryStoragesRealizations.csproj" />
+      <ProjectReference Include="..\RepositoriesStorage\RepositoriesStorage.csproj" />
       <ProjectReference Include="..\WebCoder.Domain\WebCoder.Domain.csproj" />
     </ItemGroup>
 

@@ -1,63 +1,31 @@
-﻿using WebCoder.Application.DTOs.ProjectRepository;
-using WebCoder.Application.Extensions;
+﻿using Microsoft.Extensions.Logging;
+using WebCoder.Application.DTOs.ProjectRepository;
 using WebCoder.Application.Identity;
 using WebCoder.Application.Interfaces;
 using WebCoder.Application.RepositoryInterfaces;
-using WebCoder.Domain.Exceptions;
 using WebCoder.Domain.Models;
 
 namespace WebCoder.Application.Services;
 
 public class ProjectRepositoriesService : IProjectRepositoriesService
 {
-    private const string AllowedTitleCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-";
-    
     private readonly IProjectRepositoriesRepository _projectRepositoriesRepository;
-    private readonly IRepositoryFilesService _repositoryFilesService;
+    private readonly ILogger<ProjectRepositoriesService> _logger;
 
     // ReSharper disable once ConvertToPrimaryConstructor
-    public ProjectRepositoriesService(IProjectRepositoriesRepository projectRepositoriesRepository, IRepositoryFilesService repositoryFilesService)
+    public ProjectRepositoriesService(
+        IProjectRepositoriesRepository projectRepositoriesRepository, ILogger<ProjectRepositoriesService> logger)
     {
         _projectRepositoriesRepository = projectRepositoriesRepository;
-        _repositoryFilesService = repositoryFilesService;
-    }
-    
-    public async Task AddRepository(AddRepositoryDto addRepositoryDto, ApplicationUser user)
-    {
-        var now = DateTime.Now;
-        var repositoryId = Guid.NewGuid();
-
-        if (!addRepositoryDto.Title.ContainsOnlyCharacters(AllowedTitleCharacters))
-        {
-            throw new ArgumentException("Title must contain only latin characters, digits or -");
-        }
-        
-        var repository = new ProjectRepository
-        {
-            Id = repositoryId,
-            Title = addRepositoryDto.Title,
-            OwnerUserName = user.UserName ?? string.Empty,
-            About = addRepositoryDto.About,
-            IsPublic = addRepositoryDto.IsPublic,
-            CreationDate = now
-        };
-
-        try
-        {
-            await _projectRepositoriesRepository.AddRepository(repository);
-            await _repositoryFilesService.CreateRepository(repository.OwnerUserName, repository.Title);
-        }
-        catch (Exception ex)
-        {
-            throw new ArgumentException($"You already had repository with title '{addRepositoryDto.Title}'", ex);
-        }
+        _logger = logger;
     }
 
     public async Task<IEnumerable<RepositoryDto>> GetRepositories()
     {
         var repositories = await _projectRepositoriesRepository.GetRepositories();
-
-        return repositories.Select(pr => new RepositoryDto
+        var projectRepositories = repositories as List<ProjectRepository> ?? repositories.ToList();
+        _logger.LogInformation("Received {Count} repositories from IProjectRepositoryService", projectRepositories.Count);
+        return projectRepositories.Select(pr => new RepositoryDto
         {
             Id = pr.Id,
             Title = pr.Title,
@@ -71,8 +39,9 @@ public class ProjectRepositoriesService : IProjectRepositoriesService
     public async Task<IEnumerable<RepositoryDto>> GetUserRepositories(ApplicationUser user)
     {
         var repositories = await _projectRepositoriesRepository.GetRepositoriesForUser(user.UserName ?? string.Empty);
-
-        return repositories.Select(pr => new RepositoryDto
+        var projectRepositories = repositories as List<ProjectRepository> ?? repositories.ToList();
+        _logger.LogInformation("Received {Count} repositories from IProjectRepositoryService for user ({User})", projectRepositories.Count, user.UserName);
+        return projectRepositories.Select(pr => new RepositoryDto
         {
             Id = pr.Id,
             Title = pr.Title,
@@ -86,7 +55,7 @@ public class ProjectRepositoriesService : IProjectRepositoriesService
     public async Task<RepositoryDto?> GetRepositoryById(Guid repositoryId)
     {
         var repository = await _projectRepositoriesRepository.GetProjectRepositoryById(repositoryId);
-
+        _logger.LogInformation("Repository with id ({Id}) was {Not} found", repositoryId, repository == null ? "not" : string.Empty);
         if (repository is null) return null;
 
         return new RepositoryDto
@@ -103,7 +72,7 @@ public class ProjectRepositoriesService : IProjectRepositoriesService
     public async Task<RepositoryDto?> GetRepositoryByOwnerAndTitle(string userName, string title)
     {
         var repository = await _projectRepositoriesRepository.GetProjectRepositoryByOwnerAndTitle(userName, title);
-        
+        _logger.LogInformation("Repository with owner and title ({Repository}) was {Not} found", $"{userName}/{title}", repository == null ? "not" : string.Empty);
         if (repository is null) return null;
 
         return new RepositoryDto
@@ -115,38 +84,5 @@ public class ProjectRepositoriesService : IProjectRepositoriesService
             About = repository.About,
             CreationDate = repository.CreationDate
         };
-    }
-    
-    public async Task UpdateRepository(string userName, string title, UpdateRepositoryDto updateRepositoryDto, ApplicationUser user)
-    {
-        var repository = await _projectRepositoriesRepository.GetProjectRepositoryByOwnerAndTitle(userName, title);
-        if (repository == null) throw new NotFoundException("Repository was not found");
-
-        if (repository.OwnerUserName != user.UserName) throw new PermissionDeniedException("User is not an owner of this repository");
-        
-        if (!updateRepositoryDto.Title.ContainsOnlyCharacters(AllowedTitleCharacters))
-        {
-            throw new ArgumentException("Title must contain only latin characters, digits or -");
-        }
-
-        try
-        {
-            await _projectRepositoriesRepository.UpdateRepository(repository.Id, updateRepositoryDto);
-        }
-        catch (Exception ex)
-        {
-            throw new ArgumentException($"You already had repository with title '{updateRepositoryDto.Title}'", ex);
-        }
-    }
-
-    public async Task RemoveRepository(string userName, string title, ApplicationUser user)
-    {
-        var repository = await _projectRepositoriesRepository.GetProjectRepositoryByOwnerAndTitle(userName, title);
-        if (repository == null) throw new NotFoundException("Repository was not found");
-
-        if (repository.OwnerUserName != user.UserName) throw new PermissionDeniedException("User is not an owner of this repository");
-        
-        await _projectRepositoriesRepository.RemoveRepository(repository.Id);
-        await _repositoryFilesService.DeleteRepository(userName, title);
     }
 }
